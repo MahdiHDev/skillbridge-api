@@ -476,14 +476,4 @@ Make sure to set all environment variables in your deployment platform's setting
 
 ---
 
-## 📋 Assignment Submission
 
-```
-
-```
-
----
-
-## 📄 License
-
-This project is for educational purposes as part of **Batch 6 — Assignment 5**.
