@@ -1,12 +1,12 @@
 // src/app/module/payment/payment.controller.ts
 import { Request, Response } from "express";
 import { stripe } from "../../app/config/stripe.config";
-import { IRequestUser, PaymentService } from "./payment.service";
+import { PaymentService } from "./payment.service";
 
 // ─── Create Checkout Session ───────────────────────────────────────────────
 
 const createCheckoutSession = async (req: Request, res: Response) => {
-    const user = req.user as IRequestUser;
+    const user = req.user as any;
     const { bookingId } = req.params;
 
     const result = await PaymentService.createCheckoutSession(
@@ -66,7 +66,7 @@ const handleStripeWebhookEvent = async (req: Request, res: Response) => {
 // ─── Refund ────────────────────────────────────────────────────────────────
 
 const refundPayment = async (req: Request, res: Response) => {
-    const user = req.user as IRequestUser;
+    const user = req.user as any;
     const { bookingId } = req.params;
 
     const result = await PaymentService.refundPayment(

@@ -8,6 +8,12 @@ const router: ExpressRouter = Router();
 
 router.post("/register", AuthController.registerUser);
 router.post("/login", AuthController.loginUser);
+
+router.get(
+    "/me",
+    checkAuth(UserRole.ADMIN, UserRole.STUDENT, UserRole.TUTOR),
+    AuthController.getMe,
+);
 router.post("/refresh-token", AuthController.getNewToken);
 router.post(
     "/change-password",
@@ -19,7 +25,7 @@ router.post(
     checkAuth(UserRole.ADMIN, UserRole.STUDENT, UserRole.TUTOR),
     AuthController.logoutUser,
 );
-router.post("/verify-email", AuthController.verifyEmail);
+router.get("/verify-email", AuthController.verifyEmail);
 router.post("/forget-password", AuthController.forgetPassword);
 router.post("/reset-password", AuthController.resetPassword);
 

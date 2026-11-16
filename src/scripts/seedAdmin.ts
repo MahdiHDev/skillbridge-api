@@ -1,3 +1,4 @@
+import { auth } from "../lib/auth";
 import { prisma } from "../lib/prisma";
 
 async function seedAdmin() {
@@ -21,33 +22,43 @@ async function seedAdmin() {
             throw new Error("User already exists!!");
         }
 
-        const signUpAdmin = await fetch(
-            "http://localhost:5000/api/auth/sign-up/email",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Origin: "http://localhost:3000",
-                },
-                body: JSON.stringify(adminData),
+        // const signUpAdmin = await fetch(
+        //     "http://localhost:5000/api/auth/sign-up/email",
+        //     {
+        //         method: "POST",
+        //         headers: {
+        //             "Content-Type": "application/json",
+        //             Origin: "http://localhost:3000",
+        //         },
+        //         body: JSON.stringify(adminData),
+        //     },
+        // );
+
+        const signUpAdmin = await auth.api.signUpEmail({
+            body: {
+                email: adminData.email,
+                password: adminData.password,
+                name: adminData.name,
+                role: adminData.role,
+                needPasswordChange: false,
+                rememberMe: false,
             },
-        );
+        });
 
         console.log(signUpAdmin);
 
-        if (signUpAdmin.ok) {
-            console.log("***** Admin Seeding Completed.....");
-            await prisma.user.update({
-                where: {
-                    email: adminData.email,
-                },
-                data: {
-                    emailVerified: true,
-                },
-            });
+        console.log("***** Admin Seeding Completed.....");
+        await prisma.user.update({
+            where: {
+                email: adminData.email,
+            },
+            data: {
+                emailVerified: true,
+            },
+        });
 
-            console.log("**** Email verification status updated!");
-        }
+        console.log("**** Email verification status updated!");
+
         console.log("******* SUCCESS *******");
     } catch (error) {
         console.log(error);

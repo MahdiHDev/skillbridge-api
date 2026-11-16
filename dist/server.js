@@ -1337,6 +1337,18 @@ var loginUser = async (payload) => {
     refreshToken
   };
 };
+var getMe = async (user) => {
+  const isUserExists = await prisma.user.findUnique({
+    where: {
+      id: user.id
+    }
+  });
+  if (!isUserExists) {
+    throw new Error("User not found");
+  }
+  console.log(isUserExists);
+  return isUserExists;
+};
 var getNewToken = async (refreshToken, sessionToken) => {
   const isSessionTokenExists = await prisma.session.findUnique({
     where: {
@@ -1443,24 +1455,13 @@ var logoutUser = async (sessionToken) => {
   });
   return result;
 };
-var verifyEmail = async (payload) => {
-  const { email, otp } = authValidation.verifyEmailSchema.parse(payload);
-  const result = await auth.api.verifyEmailOTP({
-    body: {
-      email,
-      otp
+var verifyEmail = async (token) => {
+  const result = await auth.api.verifyEmail({
+    query: {
+      token
     }
   });
-  if (result.status && !result.user.emailVerified) {
-    await prisma.user.update({
-      where: {
-        email
-      },
-      data: {
-        emailVerified: true
-      }
-    });
-  }
+  return result;
 };
 var forgetPassword = async (email) => {
   const isUserExist = await prisma.user.findUnique({
@@ -1515,6 +1516,7 @@ var resetPassword = async (payload) => {
 var AuthService = {
   registerUser,
   loginUser,
+  getMe,
   getNewToken,
   changePassword,
   logoutUser,
@@ -1555,6 +1557,16 @@ var loginUser2 = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+var getMe2 = async (req, res, next) => {
+  const user = req.user;
+  console.log("user", user);
+  const result = await AuthService.getMe(user);
+  res.status(200).json({
+    success: true,
+    message: "User fetched successfully!",
+    data: result
+  });
 };
 var getNewToken2 = async (req, res, next) => {
   try {
@@ -1632,8 +1644,8 @@ var logoutUser2 = async (req, res, next) => {
 };
 var verifyEmail2 = async (req, res, next) => {
   try {
-    const { email, otp } = req.body;
-    await AuthService.verifyEmail({ email, otp });
+    const { token } = req.query;
+    await AuthService.verifyEmail(token);
     res.status(200).json({
       success: true,
       message: "Email verified successfully!"
@@ -1669,6 +1681,7 @@ var resetPassword2 = async (req, res, next) => {
 var AuthController = {
   registerUser: registerUser2,
   loginUser: loginUser2,
+  getMe: getMe2,
   getNewToken: getNewToken2,
   changePassword: changePassword2,
   logoutUser: logoutUser2,
@@ -1681,6 +1694,11 @@ var AuthController = {
 var router = Router3();
 router.post("/register", AuthController.registerUser);
 router.post("/login", AuthController.loginUser);
+router.get(
+  "/me",
+  checkAuth("ADMIN" /* ADMIN */, "STUDENT" /* STUDENT */, "TUTOR" /* TUTOR */),
+  AuthController.getMe
+);
 router.post("/refresh-token", AuthController.getNewToken);
 router.post(
   "/change-password",
@@ -1692,7 +1710,7 @@ router.post(
   checkAuth("ADMIN" /* ADMIN */, "STUDENT" /* STUDENT */, "TUTOR" /* TUTOR */),
   AuthController.logoutUser
 );
-router.post("/verify-email", AuthController.verifyEmail);
+router.get("/verify-email", AuthController.verifyEmail);
 router.post("/forget-password", AuthController.forgetPassword);
 router.post("/reset-password", AuthController.resetPassword);
 var AuthRoutes = router;

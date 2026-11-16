@@ -45,6 +45,18 @@ const loginUser = async (req: Request, res: Response, next: NextFunction) => {
     }
 };
 
+const getMe = async (req: Request, res: Response, next: NextFunction) => {
+    const user = req.user;
+    console.log("user", user);
+    const result = await AuthService.getMe(user);
+
+    res.status(200).json({
+        success: true,
+        message: "User fetched successfully!",
+        data: result,
+    });
+};
+
 const getNewToken = async (req: Request, res: Response, next: NextFunction) => {
     try {
         const refreshToken = req.cookies.refreshToken;
@@ -137,9 +149,9 @@ const logoutUser = async (req: Request, res: Response, next: NextFunction) => {
 
 const verifyEmail = async (req: Request, res: Response, next: NextFunction) => {
     try {
-        const { email, otp } = req.body;
+        const { token } = req.query;
 
-        await AuthService.verifyEmail({ email, otp });
+        await AuthService.verifyEmail(token as string);
 
         res.status(200).json({
             success: true,
@@ -191,6 +203,7 @@ const resetPassword = async (
 export const AuthController = {
     registerUser,
     loginUser,
+    getMe,
     getNewToken,
     changePassword,
     logoutUser,

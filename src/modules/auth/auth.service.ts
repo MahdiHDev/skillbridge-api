@@ -1,4 +1,5 @@
 import { JwtPayload } from "jsonwebtoken";
+import { IRequestUser } from "../../app/interfaces/requestUser.interface";
 import { UserStatus } from "../../generated/enums";
 import { auth } from "../../lib/auth";
 import { prisma } from "../../lib/prisma";
@@ -9,7 +10,6 @@ import {
     ILoginUserPayload,
     IRegisterUserPayload,
     IresetPasswordPayload,
-    IverifyEmailPayload,
 } from "./auth.interface";
 import { authValidation } from "./auth.validation";
 
@@ -96,6 +96,22 @@ const loginUser = async (payload: ILoginUserPayload) => {
         accessToken,
         refreshToken,
     };
+};
+
+const getMe = async (user: IRequestUser) => {
+    const isUserExists = await prisma.user.findUnique({
+        where: {
+            id: user.id,
+        },
+    });
+
+    if (!isUserExists) {
+        throw new Error("User not found");
+    }
+
+    console.log(isUserExists);
+
+    return isUserExists;
 };
 
 const getNewToken = async (refreshToken: string, sessionToken: string) => {
@@ -226,26 +242,14 @@ const logoutUser = async (sessionToken: string) => {
     return result;
 };
 
-const verifyEmail = async (payload: IverifyEmailPayload) => {
-    const { email, otp } = authValidation.verifyEmailSchema.parse(payload);
-
-    const result = await auth.api.verifyEmailOTP({
-        body: {
-            email,
-            otp,
+const verifyEmail = async (token: string) => {
+    const result = await auth.api.verifyEmail({
+        query: {
+            token,
         },
     });
 
-    if (result.status && !result.user.emailVerified) {
-        await prisma.user.update({
-            where: {
-                email,
-            },
-            data: {
-                emailVerified: true,
-            },
-        });
-    }
+    return result;
 };
 
 const forgetPassword = async (email: string) => {
@@ -314,6 +318,7 @@ const resetPassword = async (payload: IresetPasswordPayload) => {
 export const AuthService = {
     registerUser,
     loginUser,
+    getMe,
     getNewToken,
     changePassword,
     logoutUser,
